@@ -26,7 +26,7 @@ def redirectPage():
     code = request.args.get("code")
     token_info = spotifyAuth.get_access_token(code)
     session[TOKEN_KEY] = token_info
-    return redirect(url_for('getTopArtists', _external=True))
+    return redirect(url_for('getRecentlyPlayed', _external=True))
 
 @app.route('/getRecentlyPlayed')
 def getRecentlyPlayed():
