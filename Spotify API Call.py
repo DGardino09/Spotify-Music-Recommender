@@ -2,11 +2,16 @@ from flask import Flask, url_for, session, redirect, request
 import requests
 import spotipy
 from spotipy.oauth2 import SpotifyOAuth
+from spotipy.oauth2 import SpotifyClientCredentials
 
 app = Flask(__name__)
 app.secret_key = "rkjalnfncion"
 app.config['SESSION_COOKIE_NAME'] = "Drew Cookie"
 TOKEN_KEY = "token_info"
+clientID = "ClientID"
+clientSecret = "ClientSecret"
+
+clientCredentials = SpotifyClientCredentials(client_id=clientID, client_secret=clientSecret)
 
 @app.route('/')
 def login():
@@ -23,13 +28,15 @@ def redirectPage():
     session[TOKEN_KEY] = token_info
     return redirect(url_for('getTopArtists', _external=True))
 
-@app.route('/getTopArtists')
-def getTopArtists():
-    return "Top Artists"
+@app.route('/getRecentlyPlayed')
+def getRecentlyPlayed():
+    sp = spotipy.Spotify(client_credentials_manager=clientCredentials)
+    currentUserRecentlyPlayed = sp.current_user_recently_played(limit=50, after=None, before=None)
+    return currentUserRecentlyPlayed
 
 def createSpotifyOAuth():
-    return SpotifyOAuth(client_id="CLIENT_ID", client_secret="CLIENT_SECRET",
-                        redirect_uri=url_for('redirectPage', _external=True), scope="user-library-read")
+    return SpotifyOAuth(client_id=clientID, client_secret=clientSecret,
+                        redirect_uri=url_for('redirectPage', _external=True), scope="user-read-recently-played")
 
 #TODO: Create refresh token
 #TODO: Create a playlist
