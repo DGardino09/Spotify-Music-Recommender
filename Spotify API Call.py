@@ -1,12 +1,10 @@
-import time
-
 from flask import Flask, url_for, session, redirect, request
 import json
 import pandas as pd
-import requests
 import spotipy
 from spotipy.oauth2 import SpotifyOAuth
 from spotipy.oauth2 import SpotifyClientCredentials
+import time
 
 app = Flask(__name__)
 app.secret_key = "rkjalnfncion"
@@ -46,8 +44,18 @@ def getRecentlyPlayed():
     if not authorized:
         return url_for('login', _external=False)
     sp = spotipy.Spotify(auth=session.get('token_info').get('access_token'))
-    currentUserRecentlyPlayed = sp.current_user_recently_played(limit=50, after=None, before=None)
-    return str(currentUserRecentlyPlayed)
+    results = []
+    while True:
+        currentUserRecentlyPlayed = sp.current_user_recently_played(limit=50, before=None, after=None)["items"]
+        for idx, item in enumerate(currentUserRecentlyPlayed):
+            track = item["track"]
+            trackValue = track["name"] + " : " + track["artists"][0]["name"]
+            results.append(trackValue)
+        if (idx < 50):
+            break
+    dataframe = pd.DataFrame(results, columns=['Track Names'])
+    dataframe.to_csv('recentlyPlayed.csv', index=False)
+    return "done"
 
 def getToken():
     validToken = False
@@ -71,7 +79,8 @@ def createSpotifyOAuth():
     return SpotifyOAuth(client_id=clientID, client_secret=clientSecret,
                         redirect_uri=url_for('redirectPage', _external=True), scope="user-read-recently-played")
 
-#TODO: Use Pandas to get DataFrame and specify what data to pull
+#TODO: Iterate through the json data and pull 50 recently played artists
+#TODO: Use Pandas to get DataFrame and store the 50 most recent artists
 #TODO: Create a playlist
 #TODO: Add songs to a playlist
 #TODO: Figure out how to pull similar artists based on the users most listened to songs and artists
