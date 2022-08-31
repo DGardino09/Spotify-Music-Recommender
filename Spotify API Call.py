@@ -6,6 +6,11 @@ from spotipy.oauth2 import SpotifyOAuth
 from spotipy.oauth2 import SpotifyClientCredentials
 import time
 
+#TODO: Create a playlist
+#TODO: Add songs to a playlist
+#TODO: Figure out how to pull similar artists based on the users most listened to songs and artists
+#TODO: Use JavaScript to make webpage look nice
+
 app = Flask(__name__)
 app.secret_key = "rkjalnfncion"
 app.config['SESSION_COOKIE_NAME'] = "Drew Cookie"
@@ -15,6 +20,30 @@ clientID = "ClientID"
 clientSecret = "ClientSecret"
 
 clientCredentials = SpotifyClientCredentials(client_id=clientID, client_secret=clientSecret)
+
+def createSpotifyOAuth():
+    return SpotifyOAuth(client_id=clientID, client_secret=clientSecret,
+                        redirect_uri=url_for('redirectPage', _external=True), scope="user-read-recently-played")
+
+
+def getToken():
+    validToken = False
+    tokenInfo = session.get("token_info", {})
+
+    if not (session.get("token_info", False)):
+        validToken = False
+        return tokenInfo, validToken
+
+    currentTime = int(time.time())
+    tokenExpired = session.get("token_info").get("expires_at") - currentTime < 60
+
+    if (tokenExpired):
+        spOAuth = createSpotifyOAuth()
+        tokenInfo = spOAuth.refresh_access_token(session.get("token_info").get("refresh_token"))
+
+    validToken = True
+    return tokenInfo, validToken
+
 
 @app.route('/')
 def login():
@@ -54,37 +83,26 @@ def getRecentlyPlayed():
         if (idx < 50):
             break
     dataframe = pd.DataFrame(results, columns=['Track Names'])
-    dataframe.to_csv('recentlyPlayed.csv', index=False)
+    dataframe.to_csv('recentlyPlayed.csv', index=True)
     return "done"
 
-def getToken():
-    validToken = False
-    tokenInfo = session.get("token_info", {})
-    
-    if not (session.get("token_info", False)):
-        validToken = False
-        return tokenInfo, validToken
+def getUserTopArtists():
+    return "some artists"
 
-    currentTime = int(time.time())
-    tokenExpired = session.get("token_info").get("expires_at") - currentTime < 60
+def getUserTopTracks():
+    return "some songs"
 
-    if (tokenExpired):
-        spOAuth = createSpotifyOAuth()
-        tokenInfo = spOAuth.refresh_access_token(session.get("token_info").get("refresh_token"))
+def getRelatedArtists():
+    return "some related artists"
 
-    validToken = True
-    return tokenInfo, validToken
+def getArtistTopTracks():
+    return "some songs"
 
-def createSpotifyOAuth():
-    return SpotifyOAuth(client_id=clientID, client_secret=clientSecret,
-                        redirect_uri=url_for('redirectPage', _external=True), scope="user-read-recently-played")
+def createPlaylist():
+    return "blank playlist"
 
-#TODO: Iterate through the json data and pull 50 recently played artists
-#TODO: Use Pandas to get DataFrame and store the 50 most recent artists
-#TODO: Create a playlist
-#TODO: Add songs to a playlist
-#TODO: Figure out how to pull similar artists based on the users most listened to songs and artists
-#TODO: Use JavaScript to make webpage look nice
+def modifyPlaylist():
+    return "recommended playlist"
 
 
 if __name__ == '__main__':
