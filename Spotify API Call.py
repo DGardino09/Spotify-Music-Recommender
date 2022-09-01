@@ -23,7 +23,7 @@ clientCredentials = SpotifyClientCredentials(client_id=clientID, client_secret=c
 
 def createSpotifyOAuth():
     return SpotifyOAuth(client_id=clientID, client_secret=clientSecret,
-                        redirect_uri=url_for('redirectPage', _external=True), scope="user-read-recently-played")
+                        redirect_uri=url_for('redirectPage', _external=True), scope="user-top-read")
 
 
 def getToken():
@@ -58,7 +58,7 @@ def redirectPage():
     code = request.args.get("code")
     token_info = spotifyAuth.get_access_token(code)
     session[TOKEN_KEY] = token_info
-    return redirect(url_for('getRecentlyPlayed', _external=True))
+    return redirect(url_for('getUserTopTracks', _external=True))
 
 @app.route('/logout')
 def logout():
@@ -84,13 +84,36 @@ def getRecentlyPlayed():
             break
     dataframe = pd.DataFrame(results, columns=['Track Names'])
     dataframe.to_csv('recentlyPlayed.csv', index=True)
-    return "done"
+    return "Recently Played songs compiled"
 
+@app.route('/getUserTopArtists')
 def getUserTopArtists():
     return "some artists"
 
+@app.route('/getUserTopTracks')
 def getUserTopTracks():
-    return "some songs"
+    session['token_info'], authorized = getToken()
+    session.modified = True
+    if not authorized:
+        return url_for('login', _external=False)
+    sp = spotipy.Spotify(auth=session.get('token_info').get('access_token'))
+    results = []
+    count = 0
+
+    while True:
+        offset = count * 50
+        count = count + 1
+        topTracks = sp.current_user_top_tracks(limit=50, offset=offset, time_range="short_term")["items"]
+        for idx, item in enumerate(topTracks):
+            track = item["name"]
+            artist = item["album"]
+            trackValue = track + " : " + artist["artists"][0]["name"]
+            results.append(trackValue)
+        if (len(topTracks) < 50):
+            break
+    dataframe = pd.DataFrame(results, columns=['Track Names'])
+    dataframe.to_csv('TopTracks.csv', index=True)
+    return "Top Played Songs compiled"
 
 def getRelatedArtists():
     return "some related artists"
