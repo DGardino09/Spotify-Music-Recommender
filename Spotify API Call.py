@@ -1,24 +1,17 @@
-import random
-
 from flask import Flask, url_for, session, redirect, request
-import json
-import pandas as pd
 import random
 import spotipy
 from spotipy.oauth2 import SpotifyOAuth
 from spotipy.oauth2 import SpotifyClientCredentials
 import time
 
-#TODO: Add songs to a playlist
-
 app = Flask(__name__)
 app.secret_key = "rkjalnfncion"
 app.config['SESSION_COOKIE_NAME'] = "Cookie"
 TOKEN_KEY = "token_info"
-clientID = "d3ec161021af4eaf959491dd6757c7e1"
-clientSecret = "3a8e0bf588174082bcc2961be2afaba5"
-# clientID = "ClientID"
-# clientSecret = "ClientSecret"
+
+clientID = "ClientID"
+clientSecret = "ClientSecret"
 
 clientCredentials = SpotifyClientCredentials(client_id=clientID, client_secret=clientSecret)
 
@@ -81,8 +74,6 @@ def getRecentlyPlayed():
             results.append(trackValue)
         if (idx < 50):
             break
-    # dataframe = pd.DataFrame(results, columns=['Track Names'])
-    # dataframe.to_('recentlyPlayed.csv', index=True)
     return results
 
 @app.route('/getUserTopArtists')
@@ -95,10 +86,6 @@ def getUserTopArtists():
     results = []
     artistIDList = []
     limit = 20
-
-    # topArtists = sp.current_user_top_artists(limit=limit, offset=0, time_range="medium_term")
-    # return topArtists
-
     while True:
         topArtists = sp.current_user_top_artists(limit=limit, offset=0, time_range="medium_term")["items"]
         for idx, item in enumerate(topArtists):
@@ -109,8 +96,6 @@ def getUserTopArtists():
             artistIDList.append(artistID)
         if (idx < 50):
             break
-    # dataframe = pd.DataFrame(results, columns=["Top " + str(limit) + " Artists"])
-    # dataframe.to_csv('Top Artists.csv', index=True)
     return results, artistTopTracks, artistIDList
 
 @app.route('/getUserTopTracks')
@@ -133,8 +118,6 @@ def getUserTopTracks():
             results.append(track)
         if (len(topTracks) < 50):
             break
-    # dataframe = pd.DataFrame(results, columns=['Track Names'])
-    # dataframe.to_csv('TopTracks.csv', index=True)
     return results
 
 def getRelatedArtists(artistID):
@@ -149,12 +132,9 @@ def getRelatedArtists(artistID):
         for idx, item in enumerate(relatedArtists):
             artist = item["name"]
             relatedArtistID = item["uri"]
-            #results.append(artist)
             results.append(relatedArtistID)
         if (idx < 50):
             break
-    # dataframe = pd.DataFrame(results, columns=["Related Artists"])
-    # dataframe.to_csv("Artists Related to " + artistName + ".csv", index=True)
     return results
 
 @app.route("/getArtistTopTracks")
@@ -165,10 +145,6 @@ def getArtistTopTracks(artistID):
         return url_for('login', _external=False)
     sp = spotipy.Spotify(auth=session.get('token_info').get('access_token'))
     results = []
-
-    # artistTopTracks = sp.artist_top_tracks(artist_id="11gWrKZMBsGQWmobv3oNfW")
-    # return artistTopTracks
-
     while True:
         artistsTopTracks = sp.artist_top_tracks(artist_id=artistID)["tracks"]
         for idx, item in enumerate(artistsTopTracks):
@@ -178,8 +154,6 @@ def getArtistTopTracks(artistID):
             results.append(track)
         if (idx < 50):
             break
-    # dataframe = pd.DataFrame(results, columns=["Related Artists"])
-    # dataframe.to_csv("Top Tracks for " + str(artist) + ".csv", index=True)
     return results
 
 def createPlaylist(name):
@@ -238,14 +212,11 @@ def homePage():
     relatedArtistLimit = 50
     topTracksLimit = 20
     topArtistsLimit = 30
-    count = 0
-
     session['token_info'], authorized = getToken()
     session.modified = True
     if not authorized:
         return url_for('login', _external=False)
     sp = spotipy.Spotify(auth=session.get('token_info').get('access_token'))
-
     for i in range(len(artistIDList)):
         artistID = artistIDList[i]
         relatedArtists = getRelatedArtists(artistID)
